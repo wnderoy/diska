@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app.dart';
 import 'services/firebase_config.dart';
+import 'services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase (safe to call even without a project — catches gracefully)
+  // Initialize Firebase
   try {
     await FirebaseConfig.initialize();
+    await AuthService.init(); // Listen for auth state
   } catch (_) {
-    // Firebase unavailable — app runs with mock data
+    // Firebase unavailable — app runs with limited functionality
   }
 
   SystemChrome.setPreferredOrientations([

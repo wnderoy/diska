@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import '../models/show_event.dart';
 import '../services/show_service.dart';
+import '../theme/app_theme.dart';
 import '../widgets/show_detail_sheet.dart';
 
 class MapScreen extends StatefulWidget {
@@ -122,7 +123,7 @@ class _MapScreenState extends State<MapScreen> {
       children: [
         // ---- Loading overlay ----
         if (_isLoadingShows)
-          const Center(
+          Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -131,14 +132,14 @@ class _MapScreenState extends State<MapScreen> {
                   height: 24,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Colors.black,
+                    color: AppColors.primary,
                   ),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 Text(
                   'Loading shows...',
                   style: TextStyle(
-                    color: Colors.black,
+                    color: AppColors.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                   ),
@@ -243,7 +244,7 @@ class _MapScreenState extends State<MapScreen> {
                 ),
               ),
               const SizedBox(height: 1),
-              Container(height: 1, width: 20, color: Colors.black),
+              Container(height: 1, width: 20, color: AppColors.divider),
               const SizedBox(height: 1),
               _MapButton(
                 icon: Icons.remove,
@@ -273,13 +274,13 @@ class _MapScreenState extends State<MapScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: Colors.black, width: 1),
+                  color: AppColors.background,
+                  border: Border.all(color: AppColors.divider, width: 1),
                 ),
                 child: Text(
                   '${filtered.length} show${filtered.length == 1 ? '' : 's'}',
-                  style: const TextStyle(
-                    color: Colors.black,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -300,20 +301,20 @@ class _MapScreenState extends State<MapScreen> {
                   width: 34,
                   height: 34,
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: Colors.black, width: 1),
+                    color: AppColors.background,
+                    border: Border.all(color: AppColors.divider, width: 1),
                   ),
                   child: Center(
                     child: _isRefreshing
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 14,
                             height: 14,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Colors.black,
+                              color: AppColors.primary,
                             ),
                           )
-                        : const Icon(Icons.refresh, size: 18, color: Colors.black),
+                        : Icon(Icons.refresh, size: 18, color: AppColors.primary),
                   ),
                 ),
               ),
@@ -393,14 +394,14 @@ class _ClusterWidget extends StatelessWidget {
       height: radius * 2,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.black,
-        border: Border.all(color: Colors.white, width: 2),
+        color: AppColors.primary,
+        border: Border.all(color: AppColors.textOnPrimary, width: 2),
       ),
       child: Center(
         child: Text(
           '$count',
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: AppColors.textOnPrimary,
             fontSize: 13,
             fontWeight: FontWeight.w700,
           ),
@@ -427,14 +428,14 @@ class _CompactMarker extends StatelessWidget {
           height: 44,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.grey[200],
-            border: Border.all(color: Colors.black, width: 1.5),
+            color: AppColors.surfaceAlt,
+            border: Border.all(color: AppColors.divider, width: 1.5),
           ),
           child: Center(
             child: Text(
               show.artist[0].toUpperCase(),
-              style: const TextStyle(
-                color: Colors.black,
+              style: TextStyle(
+                color: AppColors.textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
               ),
@@ -445,13 +446,13 @@ class _CompactMarker extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: Colors.black, width: 1),
+            color: AppColors.background,
+            border: Border.all(color: AppColors.divider, width: 1),
           ),
           child: Text(
             show.artist,
-            style: const TextStyle(
-              color: Colors.black,
+            style: TextStyle(
+              color: AppColors.textPrimary,
               fontSize: 9,
               fontWeight: FontWeight.w600,
             ),
@@ -479,8 +480,8 @@ class _VeryCloseMarker extends StatelessWidget {
           width: 120,
           height: 72,
           decoration: BoxDecoration(
-            color: Colors.grey[300],
-            border: Border.all(color: Colors.black, width: 1.5),
+            color: AppColors.surfaceAlt,
+            border: Border.all(color: AppColors.divider, width: 1.5),
           ),
           child: Stack(
             children: [
@@ -497,15 +498,15 @@ class _VeryCloseMarker extends StatelessWidget {
                 child: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  color: Colors.black.withValues(alpha: 0.85),
+                  color: AppColors.primary.withValues(alpha: 0.85),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         show.artist,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: AppColors.textOnPrimary,
                           fontSize: 9,
                           fontWeight: FontWeight.w700,
                         ),
@@ -514,8 +515,8 @@ class _VeryCloseMarker extends StatelessWidget {
                       ),
                       Text(
                         '${_formatDate(show.startTime)} · ${_formatTime(show.startTime)}',
-                        style: const TextStyle(
-                          color: Colors.white70,
+                        style: TextStyle(
+                          color: AppColors.textOnPrimary.withValues(alpha: 0.7),
                           fontSize: 7,
                           fontWeight: FontWeight.w400,
                         ),
@@ -531,11 +532,11 @@ class _VeryCloseMarker extends StatelessWidget {
                 child: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                  color: Colors.black,
+                  color: AppColors.primary,
                   child: Text(
                     '${show.rsvpCount}',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: AppColors.textOnPrimary,
                       fontSize: 8,
                       fontWeight: FontWeight.w700,
                     ),
@@ -550,13 +551,13 @@ class _VeryCloseMarker extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
             decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: Colors.black, width: 1),
+              color: AppColors.background,
+              border: Border.all(color: AppColors.divider, width: 1),
             ),
             child: Text(
               show.genre,
-              style: const TextStyle(
-                color: Colors.black,
+              style: TextStyle(
+                color: AppColors.textPrimary,
                 fontSize: 8,
                 fontWeight: FontWeight.w500,
               ),
@@ -590,11 +591,11 @@ class _PhotoPlaceholderPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final bgPaint = Paint()..color = const Color(0xFFE0E0E0);
+    final bgPaint = Paint()..color = AppColors.surfaceAlt;
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
 
     final stripePaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.06)
+      ..color = AppColors.primary.withValues(alpha: 0.06)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
     for (double i = -size.height; i < size.width + size.height; i += 8) {
@@ -609,7 +610,7 @@ class _PhotoPlaceholderPainter extends CustomPainter {
       text: TextSpan(
         text: letter,
         style: TextStyle(
-          color: Colors.black.withValues(alpha: 0.15),
+          color: AppColors.primary.withValues(alpha: 0.15),
           fontSize: size.height * 0.5,
           fontWeight: FontWeight.w700,
         ),
@@ -655,11 +656,11 @@ class _SearchBarState extends State<_SearchBar> {
     return Container(
       height: 44,
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.black, width: 1.5),
+        color: AppColors.background,
+        border: Border.all(color: AppColors.divider, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: AppColors.primary.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -671,19 +672,19 @@ class _SearchBarState extends State<_SearchBar> {
           widget.onChanged(v);
           setState(() {});
         },
-        style: const TextStyle(
-          color: Colors.black,
+        style: TextStyle(
+          color: AppColors.textPrimary,
           fontSize: 14,
           fontWeight: FontWeight.w400,
         ),
         decoration: InputDecoration(
           hintText: 'Search artists, venues...',
           hintStyle: TextStyle(
-            color: Colors.grey[400],
+            color: AppColors.textSecondary,
             fontSize: 14,
             fontWeight: FontWeight.w400,
           ),
-          prefixIcon: Icon(Icons.search, color: Colors.grey[600], size: 20),
+          prefixIcon: Icon(Icons.search, color: AppColors.textSecondary, size: 20),
           suffixIcon: _controller.text.isNotEmpty
               ? GestureDetector(
                   onTap: () {
@@ -691,7 +692,7 @@ class _SearchBarState extends State<_SearchBar> {
                     widget.onChanged('');
                     setState(() {});
                   },
-                  child: Icon(Icons.close, color: Colors.grey[600], size: 18),
+                  child: Icon(Icons.close, color: AppColors.textSecondary, size: 18),
                 )
               : null,
           border: InputBorder.none,
@@ -733,14 +734,14 @@ class _FilterChips extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: isActive ? Colors.black : Colors.white,
-                border: Border.all(color: Colors.black, width: 1),
+                color: isActive ? AppColors.primary : AppColors.background,
+                border: Border.all(color: AppColors.divider, width: 1),
               ),
               child: Center(
                 child: Text(
                   genre,
                   style: TextStyle(
-                    color: isActive ? Colors.white : Colors.black,
+                    color: isActive ? AppColors.textOnPrimary : AppColors.textPrimary,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
@@ -776,11 +777,11 @@ class _MapButton extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: Colors.black, width: 1.5),
+          color: AppColors.background,
+          border: Border.all(color: AppColors.divider, width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
+              color: AppColors.primary.withValues(alpha: 0.08),
               blurRadius: 3,
               offset: const Offset(0, 1),
             ),
@@ -788,15 +789,15 @@ class _MapButton extends StatelessWidget {
         ),
         child: Center(
           child: isLoading
-              ? const SizedBox(
+              ? SizedBox(
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Colors.black,
+                    color: AppColors.primary,
                   ),
                 )
-              : Icon(icon, size: 20, color: Colors.black),
+              : Icon(icon, size: 20, color: AppColors.primary),
         ),
       ),
     );

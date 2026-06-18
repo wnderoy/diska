@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
+import '../services/auth_service.dart';
 import '../screens/map_screen.dart';
 import '../screens/messages_screen.dart';
 import '../screens/add_show_screen.dart';
 import '../screens/saved_shows_screen.dart';
 import '../screens/profile_screen.dart';
+import '../widgets/auth_guard.dart';
 
 class AppScaffold extends StatefulWidget {
   const AppScaffold({super.key});
@@ -13,9 +16,7 @@ class AppScaffold extends StatefulWidget {
 }
 
 class _AppScaffoldState extends State<AppScaffold> {
-  int _currentIndex = 1; // Default to Map View
-
-  /// Increment to signal the map to reload shows.
+  int _currentIndex = 1;
   int _mapRefreshCounter = 0;
 
   late final List<Widget> _screens;
@@ -23,22 +24,35 @@ class _AppScaffoldState extends State<AppScaffold> {
   @override
   void initState() {
     super.initState();
+    // Listen to auth state to force rebuild when login state changes
+    AuthService.authState.addListener(_onAuthChange);
     _screens = [
-      const MessagesScreen(),
-      MapScreen(refreshCounter: _mapRefreshCounter),
-      AddShowScreen(onShowCreated: _onShowCreated),
+      // Messages — guarded: requires auth
+      AuthGuard(builder: (_) => MessagesScreen()),
+      const MapScreen(),
+      // Add Show — guarded
+      AuthGuard(
+        builder: (_) => AddShowScreen(onShowCreated: _onShowCreated),
+      ),
       const SavedShowsScreen(),
-      const ProfileScreen(),
+      // Profile — guarded
+      AuthGuard(builder: (_) => const ProfileScreen()),
     ];
   }
 
+  @override
+  void dispose() {
+    AuthService.authState.removeListener(_onAuthChange);
+    super.dispose();
+  }
+
+  void _onAuthChange() => setState(() {});
+
   void _onShowCreated() {
-    // Switch to map tab and trigger refresh
     setState(() {
       _currentIndex = 1;
       _mapRefreshCounter++;
     });
-    // Rebuild the screens list with the new counter
     _screens[1] = MapScreen(refreshCounter: _mapRefreshCounter);
   }
 
@@ -48,12 +62,7 @@ class _AppScaffoldState extends State<AppScaffold> {
       body: Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 430),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border.symmetric(
-              vertical: BorderSide(color: Colors.black, width: 0),
-            ),
-          ),
+          color: AppColors.background,
           child: Column(
             children: [
               Expanded(
@@ -71,11 +80,12 @@ class _AppScaffoldState extends State<AppScaffold> {
   }
 
   Widget _buildBottomNav() {
+    final isDark = _currentIndex == 2; // Add Show has dark bg
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          top: BorderSide(color: Colors.black, width: 1.5),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.primary : AppColors.background,
+        border: const Border(
+          top: BorderSide(color: AppColors.divider, width: 1.5),
         ),
       ),
       child: SafeArea(
@@ -99,6 +109,10 @@ class _AppScaffoldState extends State<AppScaffold> {
 
   Widget _navItem(int index, IconData icon, String label) {
     final isSelected = _currentIndex == index;
+    final isDark = _currentIndex == 2;
+    final activeColor = isDark ? AppColors.textOnPrimary : AppColors.primary;
+    final inactiveColor = isDark ? AppColors.textOnPrimary.withValues(alpha: 0.5) : AppColors.textSecondary;
+
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),
       behavior: HitTestBehavior.opaque,
@@ -107,18 +121,14 @@ class _AppScaffoldState extends State<AppScaffold> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 24,
-              color: isSelected ? Colors.black : Colors.grey,
-            ),
+            Icon(icon, size: 24, color: isSelected ? activeColor : inactiveColor),
             const SizedBox(height: 2),
             Text(
               label,
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? Colors.black : Colors.grey,
+                color: isSelected ? activeColor : inactiveColor,
               ),
             ),
           ],

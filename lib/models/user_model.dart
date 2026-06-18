@@ -10,6 +10,7 @@ class UserModel {
   final int followingCount;
   final int followersCount;
   final List<String> displayedPatchIds;
+  final List<String> savedShows;
 
   const UserModel({
     required this.userId,
@@ -23,6 +24,7 @@ class UserModel {
     this.followingCount = 0,
     this.followersCount = 0,
     this.displayedPatchIds = const [],
+    this.savedShows = const [],
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -47,6 +49,10 @@ class UserModel {
               ?.map((e) => e as String)
               .toList() ??
           [],
+      savedShows: (json['saved_shows'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
     );
   }
 
@@ -63,6 +69,7 @@ class UserModel {
       'following_count': followingCount,
       'followers_count': followersCount,
       'displayed_patch_ids': displayedPatchIds,
+      'saved_shows': savedShows,
     };
   }
 }

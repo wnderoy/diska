@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../models/show_event.dart';
 import '../services/show_service.dart';
+import '../theme/app_theme.dart';
 
 class AddShowScreen extends StatefulWidget {
   final VoidCallback? onShowCreated;
@@ -87,11 +88,11 @@ class _AddShowScreenState extends State<AddShowScreen> {
       lastDate: now.add(const Duration(days: 365)),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(
-            primary: Colors.black,
-            onPrimary: Colors.white,
-            surface: Colors.white,
-            onSurface: Colors.black,
+          colorScheme: ColorScheme.light(
+            primary: AppColors.primary,
+            onPrimary: AppColors.textOnPrimary,
+            surface: AppColors.background,
+            onSurface: AppColors.textPrimary,
           ),
         ),
         child: child!,
@@ -115,11 +116,11 @@ class _AddShowScreenState extends State<AddShowScreen> {
       initialTime: initial,
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(
-            primary: Colors.black,
-            onPrimary: Colors.white,
-            surface: Colors.white,
-            onSurface: Colors.black,
+          colorScheme: ColorScheme.light(
+            primary: AppColors.primary,
+            onPrimary: AppColors.textOnPrimary,
+            surface: AppColors.background,
+            onSurface: AppColors.textPrimary,
           ),
         ),
         child: child!,
@@ -167,9 +168,9 @@ class _AddShowScreenState extends State<AddShowScreen> {
     if (!_pinDropped) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Please drop a pin on the map first'),
-            backgroundColor: Colors.black,
+            backgroundColor: AppColors.primary,
           ),
         );
       }
@@ -186,9 +187,9 @@ class _AddShowScreenState extends State<AddShowScreen> {
     if (endDt.isBefore(startDt) || endDt.isAtSameMomentAs(startDt)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('End time must be after start time'),
-            backgroundColor: Colors.black,
+            backgroundColor: AppColors.primary,
           ),
         );
         setState(() => _isSubmitting = false);
@@ -218,7 +219,7 @@ class _AddShowScreenState extends State<AddShowScreen> {
             content: Text(
               id != null ? 'Show published!' : 'Could not create show',
             ),
-            backgroundColor: Colors.black,
+            backgroundColor: AppColors.primary,
           ),
         );
 
@@ -249,7 +250,7 @@ class _AddShowScreenState extends State<AddShowScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
-            backgroundColor: Colors.black,
+            backgroundColor: AppColors.primary,
           ),
         );
         setState(() => _isSubmitting = false);
@@ -260,17 +261,17 @@ class _AddShowScreenState extends State<AddShowScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
+      color: AppColors.background,
       child: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              const Text(
+              Text(
                 'Add a Show',
                 style: TextStyle(
-                  color: Colors.black,
+                  color: AppColors.textPrimary,
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
                 ),
@@ -279,7 +280,7 @@ class _AddShowScreenState extends State<AddShowScreen> {
               Text(
                 'Drop a pin, fill the details, publish.',
                 style: TextStyle(
-                  color: Colors.grey[500],
+                  color: AppColors.textSecondary,
                   fontSize: 13,
                 ),
               ),
@@ -337,7 +338,7 @@ class _AddShowScreenState extends State<AddShowScreen> {
                   child: Text(
                     'Preview: $_autoTitle',
                     style: TextStyle(
-                      color: Colors.grey[500],
+                      color: AppColors.textSecondary,
                       fontSize: 11,
                       fontStyle: FontStyle.italic,
                     ),
@@ -351,8 +352,8 @@ class _AddShowScreenState extends State<AddShowScreen> {
                 child: ElevatedButton(
                   onPressed: _isSubmitting ? null : _submit,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.textOnPrimary,
                     elevation: 0,
                     shape: const RoundedRectangleBorder(
                       borderRadius: BorderRadius.zero,
@@ -364,7 +365,7 @@ class _AddShowScreenState extends State<AddShowScreen> {
                           height: 18,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: AppColors.textOnPrimary,
                           ),
                         )
                       : const Text(
@@ -391,10 +392,10 @@ class _AddShowScreenState extends State<AddShowScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Location',
           style: TextStyle(
-            color: Colors.black,
+            color: AppColors.textPrimary,
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
@@ -406,15 +407,15 @@ class _AddShowScreenState extends State<AddShowScreen> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
             decoration: BoxDecoration(
-              color: _pinDropped ? Colors.black : const Color(0xFFF5F5F5),
-              border: Border.all(color: Colors.black, width: 1),
+              color: _pinDropped ? AppColors.primary : AppColors.surface,
+              border: Border.all(color: AppColors.divider, width: 1),
             ),
             child: Row(
               children: [
                 Icon(
                   _pinDropped ? Icons.location_on : Icons.map_outlined,
                   size: 18,
-                  color: _pinDropped ? Colors.white : Colors.black,
+                  color: _pinDropped ? AppColors.textOnPrimary : AppColors.primary,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -423,7 +424,7 @@ class _AddShowScreenState extends State<AddShowScreen> {
                         ? 'Pin dropped · ${_selectedLatitude!.toStringAsFixed(4)}, ${_selectedLongitude!.toStringAsFixed(4)}'
                         : 'Drop Pin on Map',
                     style: TextStyle(
-                      color: _pinDropped ? Colors.white : Colors.black,
+                      color: _pinDropped ? AppColors.textOnPrimary : AppColors.textPrimary,
                       fontSize: 14,
                       fontWeight:
                           _pinDropped ? FontWeight.w500 : FontWeight.w400,
@@ -461,8 +462,8 @@ class _AddShowScreenState extends State<AddShowScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: Colors.black,
+          style: TextStyle(
+            color: AppColors.textPrimary,
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
@@ -471,26 +472,26 @@ class _AddShowScreenState extends State<AddShowScreen> {
         TextFormField(
           controller: controller,
           maxLines: maxLines,
-          style: const TextStyle(
-            color: Colors.black,
+          style: TextStyle(
+            color: AppColors.textPrimary,
             fontSize: 14,
           ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+            hintStyle: TextStyle(color: AppColors.textSecondary, fontSize: 14),
             filled: true,
-            fillColor: const Color(0xFFF5F5F5),
-            border: const OutlineInputBorder(
+            fillColor: AppColors.surface,
+            border: OutlineInputBorder(
               borderRadius: BorderRadius.zero,
-              borderSide: BorderSide(color: Colors.black, width: 1),
+              borderSide: BorderSide(color: AppColors.divider, width: 1),
             ),
-            enabledBorder: const OutlineInputBorder(
+            enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.zero,
-              borderSide: BorderSide(color: Colors.black, width: 1),
+              borderSide: BorderSide(color: AppColors.divider, width: 1),
             ),
-            focusedBorder: const OutlineInputBorder(
+            focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.zero,
-              borderSide: BorderSide(color: Colors.black, width: 1.5),
+              borderSide: BorderSide(color: AppColors.divider, width: 1.5),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
@@ -510,10 +511,10 @@ class _AddShowScreenState extends State<AddShowScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Genre',
           style: TextStyle(
-            color: Colors.black,
+            color: AppColors.textPrimary,
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
@@ -522,16 +523,16 @@ class _AddShowScreenState extends State<AddShowScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: const Color(0xFFF5F5F5),
-            border: Border.all(color: Colors.black, width: 1),
+            color: AppColors.surface,
+            border: Border.all(color: AppColors.divider, width: 1),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: _selectedGenre,
               isExpanded: true,
-              dropdownColor: Colors.white,
-              style: const TextStyle(
-                color: Colors.black,
+              dropdownColor: AppColors.background,
+              style: TextStyle(
+                color: AppColors.textPrimary,
                 fontSize: 14,
               ),
               items: _genres
@@ -557,8 +558,8 @@ class _AddShowScreenState extends State<AddShowScreen> {
       children: [
         Text(
           '$label Date & Time',
-          style: const TextStyle(
-            color: Colors.black,
+          style: TextStyle(
+            color: AppColors.textPrimary,
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
@@ -573,18 +574,18 @@ class _AddShowScreenState extends State<AddShowScreen> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 12, vertical: 12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F5),
-                    border: Border.all(color: Colors.black, width: 1),
+                    color: AppColors.surface,
+                    border: Border.all(color: AppColors.divider, width: 1),
                   ),
                   child: Row(
                     children: [
                       Icon(Icons.calendar_today,
-                          size: 16, color: Colors.grey[600]),
+                          size: 16, color: AppColors.textSecondary),
                       const SizedBox(width: 8),
                       Text(
                         '${date.day}/${date.month}/${date.year}',
-                        style: const TextStyle(
-                          color: Colors.black,
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
                           fontSize: 14,
                         ),
                       ),
@@ -601,18 +602,18 @@ class _AddShowScreenState extends State<AddShowScreen> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 12, vertical: 12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F5),
-                    border: Border.all(color: Colors.black, width: 1),
+                    color: AppColors.surface,
+                    border: Border.all(color: AppColors.divider, width: 1),
                   ),
                   child: Row(
                     children: [
                       Icon(Icons.access_time,
-                          size: 16, color: Colors.grey[600]),
+                          size: 16, color: AppColors.textSecondary),
                       const SizedBox(width: 8),
                       Text(
                         time.format(context),
-                        style: const TextStyle(
-                          color: Colors.black,
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
                           fontSize: 14,
                         ),
                       ),
@@ -636,19 +637,19 @@ class _AddShowScreenState extends State<AddShowScreen> {
             width: 22,
             height: 22,
             decoration: BoxDecoration(
-              color: _isOfficial ? Colors.black : Colors.white,
-              border: Border.all(color: Colors.black, width: 1.5),
+              color: _isOfficial ? AppColors.primary : AppColors.background,
+              border: Border.all(color: AppColors.divider, width: 1.5),
             ),
             child: _isOfficial
-                ? const Icon(Icons.check, size: 16, color: Colors.white)
+                ? Icon(Icons.check, size: 16, color: AppColors.textOnPrimary)
                 : null,
           ),
         ),
         const SizedBox(width: 10),
-        const Text(
+        Text(
           'Mark as official event',
           style: TextStyle(
-            color: Colors.black,
+            color: AppColors.textPrimary,
             fontSize: 13,
             fontWeight: FontWeight.w400,
           ),
@@ -684,8 +685,8 @@ class _MiniMapPickerState extends State<_MiniMapPicker> {
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppColors.background,
         borderRadius: BorderRadius.vertical(top: Radius.zero),
       ),
       child: Column(
@@ -693,18 +694,18 @@ class _MiniMapPickerState extends State<_MiniMapPicker> {
           // Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               border: Border(
-                bottom: BorderSide(color: Colors.black, width: 1),
+                bottom: BorderSide(color: AppColors.divider, width: 1),
               ),
             ),
             child: Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Tap the map to drop a pin',
                     style: TextStyle(
-                      color: Colors.black,
+                      color: AppColors.textPrimary,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -712,7 +713,7 @@ class _MiniMapPickerState extends State<_MiniMapPicker> {
                 ),
                 GestureDetector(
                   onTap: () => Navigator.of(context).pop(),
-                  child: const Icon(Icons.close, size: 20, color: Colors.black),
+                  child: Icon(Icons.close, size: 20, color: AppColors.primary),
                 ),
               ],
             ),
@@ -784,8 +785,8 @@ class _MiniMapPickerState extends State<_MiniMapPicker> {
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor:
-                            _tappedPoint != null ? Colors.black : Colors.grey[300],
-                        foregroundColor: Colors.white,
+                            _tappedPoint != null ? AppColors.primary : Colors.grey[300],
+                        foregroundColor: AppColors.textOnPrimary,
                         elevation: 0,
                         shape: const RoundedRectangleBorder(
                           borderRadius: BorderRadius.zero,
@@ -853,12 +854,12 @@ class _DropPinMarkerState extends State<_DropPinMarker>
         return Transform.translate(
           offset: Offset(0, -20 * (1 - _bounce.value)),
           child: child,
-        );
+        ) as Widget;
       },
-      child: const Column(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.location_on, size: 32, color: Colors.black),
+          Icon(Icons.location_on, size: 32, color: AppColors.primary),
           SizedBox(height: 2),
           Text(
             '📍',
