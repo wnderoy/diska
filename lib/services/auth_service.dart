@@ -50,6 +50,25 @@ class AuthService {
         password: password,
       );
       authState.value = cred.user;
+
+      // Create user document in Firestore on first sign-up
+      if (cred.user != null) {
+        await FirebaseFirestore.instance.collection('users').doc(cred.user!.uid).set({
+          'user_id': cred.user!.uid,
+          'username': email.split('@').first,
+          'bio': '',
+          'profile_image_url': '',
+          'is_artist': false,
+          'is_verified': false,
+          'top_genres': [],
+          'top_artists': [],
+          'following_count': 0,
+          'followers_count': 0,
+          'displayed_patch_ids': [],
+          'saved_shows': [],
+        });
+      }
+
       return cred;
     } on FirebaseAuthException catch (e) {
       throw Exception(_friendlyAuthError(e));
@@ -60,6 +79,28 @@ class AuthService {
     await _auth.signOut();
     authState.value = null;
     _profileCache = null;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Profile updates
+  // ---------------------------------------------------------------------------
+  static Future<void> updateProfile({
+    String? username,
+    String? bio,
+    List<String>? topGenres,
+    List<String>? topArtists,
+  }) async {
+    final uid = userId;
+    if (uid == null) return;
+    final data = <String, dynamic>{};
+    if (username != null) data['username'] = username;
+    if (bio != null) data['bio'] = bio;
+    if (topGenres != null) data['top_genres'] = topGenres;
+    if (topArtists != null) data['top_artists'] = topArtists;
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(uid).update(data);
+      _profileCache = null; // invalidate cache
+    } on FirebaseException catch (_) {}
   }
 
   // ---------------------------------------------------------------------------

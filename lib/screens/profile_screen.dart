@@ -20,6 +20,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   List<ShowEvent> _savedShows = [];
   List<ShowEvent> _showHistory = [];
   bool _isLoading = true;
+  bool _showFillCard = false;
 
   @override
   void initState() {
@@ -76,6 +77,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       _savedShows = saved;
       _showHistory = history;
       _isLoading = false;
+      _showFillCard = _user != null && _user!.bio.isEmpty && _user!.topGenres.isEmpty;
     });
   }
 
@@ -224,6 +226,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                     ),
                   ),
 
+                  // ── Profile fill prompt card ──
+                  if (_showFillCard)
+                    _buildFillPromptCard(user),
+
                   // ── Artist "My Upcoming Shows" section ──
                   if (user.isArtist && _savedShows.isNotEmpty) ...[
                     Container(
@@ -335,6 +341,125 @@ class _ProfileScreenState extends State<ProfileScreen>
       itemCount: shows.length,
       separatorBuilder: (_, _) => Divider(color: AppColors.surfaceAlt, height: 1),
       itemBuilder: (context, i) => _ShowListTile(show: shows[i]),
+    );
+  }
+
+  // ── Profile fill prompt card ──
+  Widget _buildFillPromptCard(UserModel user) {
+    final allGenres = [
+      'Rock', 'Jazz', 'Electronic', 'Hip Hop', 'Indie', 'Folk',
+      'Punk', 'Reggae', 'Blues', 'Techno', 'Pop', 'R&B', 'Soul', 'Metal',
+    ];
+    final selectedGenres = List<String>.from(user.topGenres);
+    final bioController = TextEditingController(text: user.bio);
+
+    return StatefulBuilder(
+      builder: (context, setLocalState) {
+        return Container(
+          margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            border: Border.all(color: AppColors.purple, width: 1.5),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                const Icon(Icons.person_add_alt, size: 18, color: AppColors.purple),
+                const SizedBox(width: 8),
+                const Text('Tell us about yourself',
+                    style: TextStyle(color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w700)),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => setState(() => _showFillCard = false),
+                  child: Icon(Icons.close, size: 18, color: AppColors.textSecondary),
+                ),
+              ]),
+              const SizedBox(height: 4),
+              Text('Pick your favorite genres',
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6, runSpacing: 6,
+                children: allGenres.map((genre) {
+                  final isSelected = selectedGenres.contains(genre);
+                  return GestureDetector(
+                    onTap: () => setLocalState(() {
+                      if (isSelected) { selectedGenres.remove(genre); }
+                      else if (selectedGenres.length < 3) { selectedGenres.add(genre); }
+                    }),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isSelected ? AppColors.purple : Colors.transparent,
+                        border: Border.all(color: AppColors.purple, width: 1),
+                      ),
+                      child: Text(genre, style: TextStyle(
+                        color: isSelected ? AppColors.textOnPrimary : AppColors.textPrimary,
+                        fontSize: 11, fontWeight: FontWeight.w600,
+                      )),
+                    ),
+                  );
+                }).toList(),
+              ),
+              if (selectedGenres.length >= 3)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text('Max 3 genres selected',
+                      style: TextStyle(color: AppColors.textLight, fontSize: 10)),
+                ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: bioController,
+                maxLength: 100,
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
+                decoration: const InputDecoration(
+                  hintText: 'Write a short bio...',
+                  filled: true, fillColor: AppColors.surface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.zero,
+                    borderSide: BorderSide(color: AppColors.divider, width: 1),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  isDense: true, counterText: '',
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () async {
+                      await AuthService.updateProfile(
+                        bio: bioController.text.trim(),
+                        topGenres: selectedGenres,
+                      );
+                      _user = await AuthService.fetchProfile();
+                      if (mounted) setState(() => _showFillCard = false);
+                    },
+                    child: Container(
+                      height: 36, color: AppColors.lime,
+                      child: const Center(
+                        child: Text('Save', style: TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w600)),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => setState(() => _showFillCard = false),
+                  child: Container(
+                    height: 36, padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Center(
+                      child: Text('Skip', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                    ),
+                  ),
+                ),
+              ]),
+            ],
+          ),
+        );
+      },
     );
   }
 }
