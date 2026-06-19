@@ -352,8 +352,8 @@ class _AddShowScreenState extends State<AddShowScreen> {
                 child: ElevatedButton(
                   onPressed: _isSubmitting ? null : _submit,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.textOnPrimary,
+                    backgroundColor: AppColors.lime,
+                    foregroundColor: AppColors.primary,
                     elevation: 0,
                     shape: const RoundedRectangleBorder(
                       borderRadius: BorderRadius.zero,
@@ -365,7 +365,7 @@ class _AddShowScreenState extends State<AddShowScreen> {
                           height: 18,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: AppColors.textOnPrimary,
+                            color: AppColors.primary,
                           ),
                         )
                       : const Text(

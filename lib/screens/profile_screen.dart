@@ -56,7 +56,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       } catch (_) {}
     }
 
-    // Show history: fetch from a subcollection or use mock for now
+    // Show history: fetch from a subcollection
     List<ShowEvent> history = [];
     try {
       final historySnap = await FirebaseFirestore.instance
@@ -85,7 +85,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       return Center(
         child: SizedBox(
           width: 20, height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.purple),
         ),
       );
     }
@@ -96,7 +96,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.person_outline, size: 56, color: AppColors.textLight),
+            Icon(Icons.person_outline, size: 56, color: AppColors.pink),
             const SizedBox(height: 12),
             Text('Could not load profile', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
           ],
@@ -115,109 +115,154 @@ class _ProfileScreenState extends State<ProfileScreen>
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  const SizedBox(height: 24),
-
-                  // Avatar + perimeter badges
-                  Center(
-                    child: SizedBox(
-                      width: 110,
-                      height: 110,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.primary,
-                              border: Border.fromBorderSide(BorderSide(color: AppColors.divider, width: 2)),
-                            ),
-                            child: Center(
-                              child: Text(
-                                user.username.isNotEmpty ? user.username[0].toUpperCase() : '?',
-                                style: TextStyle(color: AppColors.textOnPrimary, fontSize: 32, fontWeight: FontWeight.w700),
-                              ),
-                            ),
-                          ),
-                          ...List.generate(displayedPatches.length, (i) {
-                            final positions = [
-                              const Offset(0, -48),
-                              const Offset(-44, 20),
-                              const Offset(44, 20),
-                            ];
-                            return Positioned(
-                              left: 55 + positions[i].dx,
-                              top: 55 + positions[i].dy,
-                              child: Container(
-                                width: 22, height: 22,
+                  // ── Purple profile header ──
+                  Container(
+                    color: AppColors.purple,
+                    padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
+                    child: Column(
+                      children: [
+                        // Avatar + perimeter badges
+                        SizedBox(
+                          width: 110,
+                          height: 110,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Container(
+                                width: 80,
+                                height: 80,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: AppColors.background,
-                                  border: Border.all(color: AppColors.divider, width: 1.5),
+                                  color: AppColors.purple,
+                                  border: Border.all(color: Colors.white, width: 3),
                                 ),
-                                child: Icon(Icons.auto_awesome, size: 12, color: AppColors.textSecondary),
+                                child: Center(
+                                  child: Text(
+                                    user.username.isNotEmpty ? user.username[0].toUpperCase() : '?',
+                                    style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w700),
+                                  ),
+                                ),
                               ),
-                            );
-                          }),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Username + verified badge
-                  Center(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(user.username, style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
-                        if (user.isVerified) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            width: 18, height: 18,
-                            decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                            child: Icon(Icons.check, size: 12, color: AppColors.textOnPrimary),
+                              // Perimeter badges (up to 3, cycling purple/lime/pink)
+                              ...List.generate(displayedPatches.length, (i) {
+                                final positions = [
+                                  const Offset(0, -48),
+                                  const Offset(-44, 20),
+                                  const Offset(44, 20),
+                                ];
+                                return Positioned(
+                                  left: 55 + positions[i].dx,
+                                  top: 55 + positions[i].dy,
+                                  child: Container(
+                                    width: 22, height: 22,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: AppColors.accentByIndex(i),
+                                      border: Border.all(color: Colors.white, width: 1.5),
+                                    ),
+                                    child: Icon(Icons.auto_awesome, size: 12, color: Colors.white),
+                                  ),
+                                );
+                              }),
+                            ],
                           ),
-                        ],
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Username + lime verified checkmark (if artist)
+                        Center(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  user.username,
+                                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (user.isArtist) ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  width: 18, height: 18,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.lime,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(Icons.check, size: 12, color: AppColors.purple),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+
+                        // Bio
+                        if (user.bio.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              user.bio,
+                              style: TextStyle(color: Colors.white70, fontSize: 13),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+
+                        const SizedBox(height: 20),
+
+                        // ── Colored stats row ──
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _coloredStat('Shows', '${_showHistory.length}', AppColors.pink),
+                            const SizedBox(width: 36),
+                            _coloredStat('Following', '${user.followingCount}', AppColors.purple),
+                            const SizedBox(width: 36),
+                            _coloredStat('Followers', '${user.followersCount}', AppColors.lime),
+                          ],
+                        ),
                       ],
                     ),
                   ),
-                  if (user.bio.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(user.bio, style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                    ),
-                  const SizedBox(height: 16),
 
-                  // Stats
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _statBox('Shows', '${_showHistory.length}'),
-                      const SizedBox(width: 32),
-                      _statBox('Following', '${user.followingCount}'),
-                      const SizedBox(width: 32),
-                      _statBox('Followers', '${user.followersCount}'),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Artist section
+                  // ── Artist "My Upcoming Shows" section ──
                   if (user.isArtist && _savedShows.isNotEmpty) ...[
-                    Divider(color: AppColors.divider, height: 1),
-                    _sectionHeader('My Upcoming Performances'),
-                    ..._savedShows.take(3).map((show) => _ShowListTile(show: show)),
+                    Container(
+                      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          left: BorderSide(color: AppColors.lime, width: 3),
+                        ),
+                      ),
+                      padding: const EdgeInsets.only(left: 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Text(
+                              'My Upcoming Shows',
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          ..._savedShows.take(3).map((show) => _ShowListTile(show: show)),
+                          const SizedBox(height: 4),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 8),
                   ],
 
-                  // Tabs
+                  // ── TabBar ──
                   Divider(color: AppColors.divider, height: 1),
                   TabBar(
                     controller: _tabController,
-                    labelColor: AppColors.primary,
+                    labelColor: AppColors.pink,
                     unselectedLabelColor: AppColors.textSecondary,
-                    indicatorColor: AppColors.primary,
+                    indicatorColor: AppColors.pink,
                     indicatorSize: TabBarIndicatorSize.label,
                     labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                     unselectedLabelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
@@ -244,20 +289,33 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  Widget _statBox(String label, String value) {
+  /// Colored stat column with a matching small underline.
+  Widget _coloredStat(String label, String value, Color color) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(value, style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
+        Text(value,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            )),
         const SizedBox(height: 2),
-        Text(label, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+        Container(
+          width: 20,
+          height: 3,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(label,
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 12,
+            )),
       ],
-    );
-  }
-
-  Widget _sectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
-      child: Text(title, style: TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w700)),
     );
   }
 
@@ -266,7 +324,8 @@ class _ProfileScreenState extends State<ProfileScreen>
       return Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 32),
-          child: Text(emptyText, style: TextStyle(color: AppColors.textLight, fontSize: 13)),
+          child: Text(emptyText,
+              style: TextStyle(color: AppColors.textLight, fontSize: 13)),
         ),
       );
     }
@@ -291,11 +350,20 @@ class _ShowListTile extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 44, height: 44,
-            decoration: BoxDecoration(color: AppColors.surfaceAlt, border: Border.all(color: AppColors.divider, width: 1)),
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceAlt,
+              border: Border.all(color: AppColors.divider, width: 1),
+            ),
             child: Center(
-              child: Text(show.title.isNotEmpty ? show.title[0].toUpperCase() : '?',
-                  style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
+              child: Text(
+                show.title.isNotEmpty ? show.title[0].toUpperCase() : '?',
+                style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700),
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -303,9 +371,20 @@ class _ShowListTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(show.title, style: TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(
+                  show.title,
+                  style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 const SizedBox(height: 2),
-                Text('${show.primaryGenre} · ${_formatDate(show.startTime)}', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                Text(
+                  '${show.primaryGenre} · ${_formatDate(show.startTime)}',
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                ),
               ],
             ),
           ),
@@ -316,7 +395,10 @@ class _ShowListTile extends StatelessWidget {
   }
 
   String _formatDate(DateTime dt) {
-    const months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
     return '${dt.day} ${months[dt.month]}';
   }
 }

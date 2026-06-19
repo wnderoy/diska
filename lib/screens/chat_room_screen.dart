@@ -86,7 +86,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(widget.show.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-            Text('${widget.show.rsvpCount} going',
+            Text('${widget.show.interestedCount} going',
                 style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
           ],
         ),

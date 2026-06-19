@@ -162,7 +162,7 @@ class _ChatChannelTile extends StatelessWidget {
                 children: [
                   Text(show.title, style: TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 2),
-                  Text('${show.rsvpCount} going · ${show.primaryGenre}', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                  Text('${show.interestedCount} going · ${show.primaryGenre}', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                 ],
               ),
             ),

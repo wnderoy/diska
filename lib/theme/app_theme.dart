@@ -8,34 +8,39 @@ class AppColors {
   AppColors._();
 
   // -- Core tokens --
-  static const Color primary = Color(0xFF000000);       // black
-  static const Color secondary = Color(0xFF2E8B);     // white
-  static const Color tertiary = Color(0xFF222222);      // near-black for surfaces
-  static const Color accent = Color(0xFF000000);        // emphasis (same as 
+  static const Color primary = Color(0xFF0E0E10);
+  static const Color secondary = Color(0xFFE8E8E8);
+  static const Color tertiary = Color(0xFF2A2A2E);
+  static const Color accent = Color(0xFF0E0E10);
+
+  // -- Palette accents --
+  static const Color purple = Color(0xFF5B4DFF);
+  static const Color lime = Color(0xFFC7FF3D);
+  static const Color pink = Color(0xFFFF2E8B);
+
+  /// Returns one of the 3 accent colors cycling by index.
+  static Color accentByIndex(int i) {
+    const accents = [purple, lime, pink];
+    return accents[i % accents.length];
+  }
 
   // -- Backgrounds & surfaces --
- static const Color background = Color(0xFFFFFFFF);    // page background
-
-  static const Color surface = Color(0x5B4DFF);       // cards, input fills
-
-  static const Color surfaceAlt = Color(0xC7FF3D);    // alternate surface
-
-  static const Color surfaceDark = Color(0x1A1A1A);   // dark surface
-
-  static const Color divider = Color(0xFF000000);       // borders, dividers
+  static const Color background = Color(0xFFE8E8E8);
+  static const Color surface = Color(0xFFD4D4D4);
+  static const Color surfaceAlt = Color(0xFFC8C8C8);
+  static const Color surfaceDark = Color(0xFF1A1A1E);
+  static const Color divider = Color(0xFF0E0E10);
 
   // -- Text --
-  static const Color textPrimary = Color(0xFF000000);
-  static const Color textSecondary = Color(0xFF888888);
-  static const Color textLight = Color(0xFFAAAAAA);
-  static const Color textOnPrimary = Color(0xFFFFFFFF);
-  static const Color textOnDark = Color(0xFFFFFFFF);
+  static const Color textPrimary = Color(0xFF0E0E10);
+  static const Color textSecondary = Color(0xFF6A6A6E);
+  static const Color textLight = Color(0xFF9A9A9E);
+  static const Color textOnPrimary = Color(0xFFE8E8E8);
+  static const Color textOnDark = Color(0xFFE8E8E8);
 
   // -- Feedback --
-  static const Color success = Color(0xFF000000);
-  static const Color error = Color(0xFF000000);
-
-
+  static const Color success = Color(0xFF0E0E10);
+  static const Color error = Color(0xFFFF2E8B);
 }
 
 class AppTheme {

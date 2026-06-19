@@ -24,18 +24,12 @@ class _AppScaffoldState extends State<AppScaffold> {
   @override
   void initState() {
     super.initState();
-    // Listen to auth state to force rebuild when login state changes
     AuthService.authState.addListener(_onAuthChange);
     _screens = [
-      // Messages — guarded: requires auth
       AuthGuard(builder: (_) => MessagesScreen()),
       const MapScreen(),
-      // Add Show — guarded
-      AuthGuard(
-        builder: (_) => AddShowScreen(onShowCreated: _onShowCreated),
-      ),
+      AuthGuard(builder: (_) => AddShowScreen(onShowCreated: _onShowCreated)),
       const SavedShowsScreen(),
-      // Profile — guarded
       AuthGuard(builder: (_) => const ProfileScreen()),
     ];
   }
@@ -80,10 +74,10 @@ class _AppScaffoldState extends State<AppScaffold> {
   }
 
   Widget _buildBottomNav() {
-    final isDark = _currentIndex == 2; // Add Show has dark bg
+    final isDark = _currentIndex == 2;
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.primary : AppColors.background,
+        color: isDark ? AppColors.primary : AppColors.purple,
         border: const Border(
           top: BorderSide(color: AppColors.divider, width: 1.5),
         ),
@@ -110,8 +104,10 @@ class _AppScaffoldState extends State<AppScaffold> {
   Widget _navItem(int index, IconData icon, String label) {
     final isSelected = _currentIndex == index;
     final isDark = _currentIndex == 2;
-    final activeColor = isDark ? AppColors.textOnPrimary : AppColors.primary;
-    final inactiveColor = isDark ? AppColors.textOnPrimary.withValues(alpha: 0.5) : AppColors.textSecondary;
+    final activeColor = isDark ? AppColors.lime : AppColors.lime;
+    final inactiveColor = isDark
+        ? AppColors.textOnPrimary.withValues(alpha: 0.5)
+        : AppColors.textOnPrimary;
 
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),
@@ -121,7 +117,22 @@ class _AppScaffoldState extends State<AppScaffold> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 24, color: isSelected ? activeColor : inactiveColor),
+            // Colorful indicator on selected tab
+            if (isSelected)
+              Container(
+                width: 24,
+                height: 2.5,
+                margin: const EdgeInsets.only(bottom: 4),
+                decoration: BoxDecoration(
+                  color: activeColor,
+                  borderRadius: BorderRadius.circular(1),
+                ),
+              )
+            else
+              const SizedBox(height: 6.5),
+            Icon(icon,
+                size: 24,
+                color: isSelected ? activeColor : inactiveColor),
             const SizedBox(height: 2),
             Text(
               label,

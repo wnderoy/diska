@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
 
 class AuthPromptScreen extends StatefulWidget {
@@ -156,8 +157,8 @@ class _AuthPromptScreenState extends State<AuthPromptScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _submit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.lime,
+                      foregroundColor: AppColors.primary,
                       elevation: 0,
                       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
                     ),
@@ -165,7 +166,7 @@ class _AuthPromptScreenState extends State<AuthPromptScreen> {
                         ? const SizedBox(
                             width: 18,
                             height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
                           )
                         : Text(
                             _isSignUp ? 'Create Account' : 'Log In',

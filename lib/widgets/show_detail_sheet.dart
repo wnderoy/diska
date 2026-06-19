@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../models/show_event.dart';
 import '../services/chat_service.dart';
+import '../services/auth_service.dart';
 import '../screens/chat_room_screen.dart';
 import '../widgets/auth_guard.dart';
 
@@ -16,32 +17,46 @@ class ShowDetailSheet extends StatefulWidget {
 
 class _ShowDetailSheetState extends State<ShowDetailSheet> {
   bool _isSaved = false;
-  bool _hasJoined = false;
+  bool _isInterested = false;
 
   @override
   void initState() {
     super.initState();
-    _checkJoined();
+    _checkInterest();
+    _checkSaved();
   }
 
-  Future<void> _checkJoined() async {
-    final joined = await ChatService.hasJoinedShow(widget.show.showId);
-    if (mounted) setState(() => _hasJoined = joined);
+  Future<void> _checkInterest() async {
+    final interested = await ChatService.hasMarkedInterested(widget.show.showId);
+    if (mounted) setState(() => _isInterested = interested);
   }
 
-  Future<void> _enterChat() async {
-    // Guard: require auth
+  Future<void> _checkSaved() async {
+    final savedIds = await AuthService.getSavedShowIds();
+    if (mounted) setState(() => _isSaved = savedIds.contains(widget.show.showId));
+  }
+
+  Future<void> _markInterested() async {
     if (!AuthGuard.requireAuth(context)) return;
-
-    final wasNew = await ChatService.incrementRsvpIfNew(widget.show.showId);
-    if (wasNew && mounted) {
-      setState(() => _hasJoined = true);
+    await ChatService.markInterested(widget.show.showId);
+    if (mounted) {
+      setState(() => _isInterested = true);
       widget.onJoinedChat?.call();
     }
+  }
+
+  Future<void> _joinChat() async {
+    if (!AuthGuard.requireAuth(context)) return;
     if (!mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => ChatRoomScreen(show: widget.show)),
     );
+  }
+
+  Future<void> _toggleSaved() async {
+    if (!AuthGuard.requireAuth(context)) return;
+    await AuthService.toggleSavedShow(widget.show.showId);
+    if (mounted) setState(() => _isSaved = !_isSaved);
   }
 
   @override
@@ -81,7 +96,7 @@ class _ShowDetailSheetState extends State<ShowDetailSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(show.title, style: const TextStyle(color: AppColors.textPrimary, fontSize: 22, fontWeight: FontWeight.w700)),
+                    Text(show.title, style: TextStyle(color: AppColors.textPrimary, fontSize: 22, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 4),
                     Row(children: [
                       Icon(Icons.calendar_today, size: 14, color: AppColors.textSecondary),
@@ -98,13 +113,13 @@ class _ShowDetailSheetState extends State<ShowDetailSheet> {
                     Row(children: [
                       Icon(Icons.people_outline, size: 16, color: AppColors.textSecondary),
                       const SizedBox(width: 6),
-                      Text('${show.rsvpCount} going', style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
+                      Text('${show.interestedCount} interested', style: TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
                     ]),
                   ],
                 ),
               ),
 
-              const Divider(color: AppColors.divider, height: 24),
+              Divider(color: AppColors.divider, height: 24),
 
               // Full-height content
               Padding(
@@ -115,8 +130,8 @@ class _ShowDetailSheetState extends State<ShowDetailSheet> {
                     if (show.primaryGenre.isNotEmpty)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: const BoxDecoration(color: AppColors.primary, border: Border.fromBorderSide(BorderSide(color: AppColors.divider))),
-                        child: Text(show.primaryGenre, style: const TextStyle(color: AppColors.textOnPrimary, fontSize: 11, fontWeight: FontWeight.w600)),
+                        decoration: BoxDecoration(color: AppColors.primary, border: Border.fromBorderSide(BorderSide(color: AppColors.divider))),
+                        child: Text(show.primaryGenre, style: TextStyle(color: AppColors.textOnPrimary, fontSize: 11, fontWeight: FontWeight.w600)),
                       ),
                     const SizedBox(height: 16),
                     if (show.description.isNotEmpty) ...[
@@ -126,17 +141,17 @@ class _ShowDetailSheetState extends State<ShowDetailSheet> {
                     Row(children: [
                       Expanded(
                         child: GestureDetector(
-                          onTap: () => setState(() => _isSaved = !_isSaved),
+                          onTap: _toggleSaved,
                           child: Container(
                             height: 44,
                             decoration: BoxDecoration(
-                              color: _isSaved ? AppColors.primary : AppColors.background,
-                              border: Border.all(color: AppColors.divider, width: 1),
+                              color: _isSaved ? AppColors.pink : AppColors.pink.withValues(alpha: 0.1),
+                              border: Border.all(color: AppColors.pink, width: 1),
                             ),
                             child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                              Icon(_isSaved ? Icons.star : Icons.star_border, size: 18, color: _isSaved ? AppColors.textOnPrimary : AppColors.textPrimary),
+                              Icon(_isSaved ? Icons.star : Icons.star_border, size: 18, color: _isSaved ? AppColors.textOnPrimary : AppColors.pink),
                               const SizedBox(width: 6),
-                              Text(_isSaved ? 'Saved' : 'Save Event', style: TextStyle(color: _isSaved ? AppColors.textOnPrimary : AppColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
+                              Text(_isSaved ? 'Saved' : 'Save Event', style: TextStyle(color: _isSaved ? AppColors.textOnPrimary : AppColors.pink, fontSize: 13, fontWeight: FontWeight.w600)),
                             ]),
                           ),
                         ),
@@ -144,14 +159,14 @@ class _ShowDetailSheetState extends State<ShowDetailSheet> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: GestureDetector(
-                          onTap: _enterChat,
+                          onTap: _isInterested ? _joinChat : _markInterested,
                           child: Container(
                             height: 44,
-                            decoration: const BoxDecoration(color: AppColors.primary, border: Border.fromBorderSide(BorderSide(color: AppColors.divider))),
+                            decoration: BoxDecoration(color: AppColors.purple, border: Border.fromBorderSide(BorderSide(color: AppColors.purple))),
                             child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                              Icon(Icons.message_outlined, size: 18, color: AppColors.textOnPrimary),
+                              Icon(_isInterested ? Icons.chat : Icons.favorite_border, size: 18, color: AppColors.textOnPrimary),
                               SizedBox(width: 6),
-                              Text(_hasJoined ? 'Open Chat' : 'Enter Group Chat', style: TextStyle(color: AppColors.textOnPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
+                              Text(_isInterested ? 'Join Chat' : 'Interested', style: TextStyle(color: AppColors.textOnPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
                             ]),
                           ),
                         ),

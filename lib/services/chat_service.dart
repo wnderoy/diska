@@ -6,7 +6,6 @@ import '../models/show_event.dart';
 class ChatService {
   static const String _userIdKey = 'bamap_local_user_id';
   static const String _userNameKey = 'bamap_local_user_name';
-  static const String _joinedShowsKey = 'bamap_joined_shows';
 
   // ---------------------------------------------------------------------------
   // Local session user (no-auth fallback)
@@ -37,40 +36,48 @@ class ChatService {
   }
 
   // ---------------------------------------------------------------------------
-  // Joined-shows tracking (prevents double RSVP)
+  // Interested-users tracking (Firestore array-based)
   // ---------------------------------------------------------------------------
-  static Future<Set<String>> getJoinedShowIds() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getStringList(_joinedShowsKey);
-    return (raw ?? []).toSet();
-  }
-
-  static Future<void> markShowJoined(String showId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final joined = await getJoinedShowIds();
-    joined.add(showId);
-    await prefs.setStringList(_joinedShowsKey, joined.toList());
-  }
-
-  static Future<bool> hasJoinedShow(String showId) async {
-    final joined = await getJoinedShowIds();
-    return joined.contains(showId);
-  }
-
-  // ---------------------------------------------------------------------------
-  // RSVP increment (only if not already joined)
-  // ---------------------------------------------------------------------------
-  static Future<bool> incrementRsvpIfNew(String showId) async {
-    if (await hasJoinedShow(showId)) return false;
+  static Future<bool> markInterested(String showId) async {
+    final uid = await getLocalUserId();
+    final showRef = FirebaseFirestore.instance.collection('shows').doc(showId);
     try {
-      await FirebaseFirestore.instance
-          .collection('shows')
-          .doc(showId)
-          .update({'rsvp_count': FieldValue.increment(1)});
-      await markShowJoined(showId);
+      await showRef.update({
+        'interested_users': FieldValue.arrayUnion([uid]),
+      });
       return true;
     } on FirebaseException catch (_) {
       return false;
+    }
+  }
+
+  static Future<bool> hasMarkedInterested(String showId) async {
+    final uid = await getLocalUserId();
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('shows')
+          .doc(showId)
+          .get();
+      if (!doc.exists) return false;
+      final data = doc.data()!;
+      final users =
+          (data['interested_users'] as List<dynamic>?)?.cast<String>() ?? [];
+      return users.contains(uid);
+    } on FirebaseException catch (_) {
+      return false;
+    }
+  }
+
+  static Future<List<String>> getInterestedShowIds() async {
+    final uid = await getLocalUserId();
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('shows')
+          .where('interested_users', arrayContains: uid)
+          .get(const GetOptions(source: Source.server));
+      return snapshot.docs.map((doc) => doc.id).toList();
+    } on FirebaseException catch (_) {
+      return [];
     }
   }
 
@@ -119,7 +126,7 @@ class ChatService {
   // Fetch user's active shows (joined or saved) for the Chat Hub
   // ---------------------------------------------------------------------------
   static Future<List<ShowEvent>> getUserShows() async {
-    final joinedIds = await getJoinedShowIds();
+    final joinedIds = await getInterestedShowIds();
     if (joinedIds.isEmpty) return [];
 
     try {

@@ -77,18 +77,6 @@ class _MapScreenState extends State<MapScreen> {
   List<String> get _allGenres =>
       _shows.map((s) => s.genre).toSet().toList()..sort();
 
-  /// Build a lookup map from position key -> RSVP count.
-  /// Used by the cluster builder since Marker has no data field.
-  Map<String, int> _buildRsvpLookup(List<ShowEvent> shows) {
-    final lookup = <String, int>{};
-    for (final show in shows) {
-      lookup[_posKey(show.position)] = show.rsvpCount;
-    }
-    return lookup;
-  }
-
-  String _posKey(LatLng p) => '${p.latitude},${p.longitude}';
-
   ShowEvent? _findShowByPoint(LatLng point) {
     for (final show in _shows) {
       final d = (point.latitude - show.latitude).abs() +
@@ -117,7 +105,6 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     final filtered = _filteredShows;
-    final rsvpLookup = _buildRsvpLookup(filtered);
 
     return Stack(
       children: [
@@ -188,13 +175,7 @@ class _MapScreenState extends State<MapScreen> {
                 disableClusteringAtZoom: 16,
                 onMarkerTap: (marker) => _onMarkerTap(_findShowByPoint(marker.point)),
                 builder: (context, clusterMarkers) {
-                  // Sum RSVPs by looking up each marker's point
-                  int totalRsvp = 0;
-                  for (final m in clusterMarkers) {
-                    final key = _posKey(m.point);
-                    totalRsvp += rsvpLookup[key] ?? 1;
-                  }
-                  return _ClusterWidget(count: totalRsvp);
+                  return _ClusterWidget(count: clusterMarkers.length);
                 },
               ),
             ),
@@ -238,6 +219,7 @@ class _MapScreenState extends State<MapScreen> {
             children: [
               _MapButton(
                 icon: Icons.add,
+                colorIndex: 0,
                 onTap: () => _mapController.move(
                   _mapController.camera.center,
                   (_currentZoom + 1).clamp(8.0, 18.0),
@@ -248,6 +230,7 @@ class _MapScreenState extends State<MapScreen> {
               const SizedBox(height: 1),
               _MapButton(
                 icon: Icons.remove,
+                colorIndex: 1,
                 onTap: () => _mapController.move(
                   _mapController.camera.center,
                   (_currentZoom - 1).clamp(8.0, 18.0),
@@ -256,6 +239,7 @@ class _MapScreenState extends State<MapScreen> {
               const SizedBox(height: 12),
               _MapButton(
                 icon: Icons.my_location,
+                colorIndex: 2,
                 isLoading: _isLocating,
                 onTap: _recenter,
               ),
@@ -380,7 +364,7 @@ class _MapScreenState extends State<MapScreen> {
 }
 
 // ---------------------------------------------------------------------------
-// Cluster widget — large circle with RSVP count
+// Cluster widget — colorful circle with RSVP count
 // ---------------------------------------------------------------------------
 class _ClusterWidget extends StatelessWidget {
   final int count;
@@ -389,13 +373,21 @@ class _ClusterWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final radius = min(20.0 + count * 0.3, 34.0);
+    final accent = AppColors.accentByIndex(count);
     return Container(
       width: radius * 2,
       height: radius * 2,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: AppColors.primary,
-        border: Border.all(color: AppColors.textOnPrimary, width: 2),
+        color: accent,
+        border: Border.all(color: AppColors.background, width: 2.5),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withValues(alpha: 0.3),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Center(
         child: Text(
@@ -412,223 +404,349 @@ class _ClusterWidget extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Compact marker — photo circle + artist name
+// Compact marker — photo thumbnail + colorful sticker tags
 // ---------------------------------------------------------------------------
 class _CompactMarker extends StatelessWidget {
   final ShowEvent show;
   const _CompactMarker({required this.show});
 
+  String get _photoUrl =>
+      'https://picsum.photos/seed/${show.showId}/200/200';
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: AppColors.surfaceAlt,
-            border: Border.all(color: AppColors.divider, width: 1.5),
+    final accent = AppColors.accentByIndex(show.showId.hashCode);
+    return SizedBox(
+      width: 96,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Photo with colorful border + floating sticker
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: accent, width: 2.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: accent.withValues(alpha: 0.25),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                  image: DecorationImage(
+                    image: NetworkImage(_photoUrl),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              // Floating genre sticker (bottom-right edge)
+              if (show.genre.isNotEmpty)
+                Positioned(
+                  bottom: -2,
+                  right: -4,
+                  child: Transform.rotate(
+                    angle: 0.12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: AppColors.accentByIndex(
+                            show.showId.hashCode + 2),
+                        border: Border.all(
+                          color: AppColors.accentByIndex(
+                              show.showId.hashCode + 2),
+                          width: 0.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors
+                                .accentByIndex(
+                                    show.showId.hashCode + 2)
+                                .withValues(alpha: 0.4),
+                            blurRadius: 2,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        show.genre,
+                        style: TextStyle(
+                          color: _textOnAccent(
+                              show.showId.hashCode + 2),
+                          fontSize: 6,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
-          child: Center(
+          const SizedBox(height: 4),
+          // Artist name tag
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              border: Border.all(color: accent, width: 1),
+            ),
             child: Text(
-              show.artist[0].toUpperCase(),
+              show.artist,
               style: TextStyle(
                 color: AppColors.textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
               ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-          decoration: BoxDecoration(
-            color: AppColors.background,
-            border: Border.all(color: AppColors.divider, width: 1),
-          ),
-          child: Text(
-            show.artist,
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 9,
-              fontWeight: FontWeight.w600,
-            ),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
 // ---------------------------------------------------------------------------
-// Very close marker — full photo card with overlay info
+// Very close marker — full photo card with colorful sticker overlays
 // ---------------------------------------------------------------------------
 class _VeryCloseMarker extends StatelessWidget {
   final ShowEvent show;
   const _VeryCloseMarker({required this.show});
 
+  String get _photoUrl =>
+      'https://picsum.photos/seed/${show.showId}/240/160';
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 120,
-          height: 72,
-          decoration: BoxDecoration(
-            color: AppColors.surfaceAlt,
-            border: Border.all(color: AppColors.divider, width: 1.5),
-          ),
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: _PhotoPlaceholderPainter(letter: show.artist[0]),
+    final accent = AppColors.accentByIndex(show.showId.hashCode);
+    final dateStr = _formatDate(show.startTime);
+    final genreStr = show.genre;
+
+    return SizedBox(
+      width: 130,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Photo card with colorful border
+          Container(
+            width: 120,
+            height: 76,
+            decoration: BoxDecoration(
+              border: Border.all(color: accent, width: 2.5),
+              boxShadow: [
+                BoxShadow(
+                  color: accent.withValues(alpha: 0.3),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
                 ),
+              ],
+              image: DecorationImage(
+                image: NetworkImage(_photoUrl),
+                fit: BoxFit.cover,
               ),
-              // Bottom overlay: artist + date
-              Positioned(
-                left: 4,
-                right: 4,
-                bottom: 4,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  color: AppColors.primary.withValues(alpha: 0.85),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        show.artist,
-                        style: TextStyle(
-                          color: AppColors.textOnPrimary,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+            ),
+            child: Stack(
+              children: [
+                // Dark gradient overlay for readability
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          AppColors.primary.withValues(alpha: 0.7),
+                        ],
+                        stops: const [0.4, 1.0],
                       ),
-                      Text(
-                        '${_formatDate(show.startTime)} · ${_formatTime(show.startTime)}',
-                        style: TextStyle(
-                          color: AppColors.textOnPrimary.withValues(alpha: 0.7),
-                          fontSize: 7,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // RSVP count badge top-right
-              Positioned(
-                top: 4,
-                right: 4,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                  color: AppColors.primary,
-                  child: Text(
-                    '${show.rsvpCount}',
-                    style: TextStyle(
-                      color: AppColors.textOnPrimary,
-                      fontSize: 8,
-                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-              ),
+                // --- FLOATING CORNER STICKER: date (top-left) ---
+                Positioned(
+                  top: -1,
+                  left: -1,
+                  child: Transform.rotate(
+                    angle: -0.08,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: accent,
+                        border: Border.all(
+                            color: accent, width: 0.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: accent.withValues(alpha: 0.4),
+                            blurRadius: 3,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        _formatDate(show.startTime),
+                        style: TextStyle(
+                          color: _textOnAccent(
+                              show.showId.hashCode),
+                          fontSize: 7,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                // --- FLOATING CORNER STICKER: genre (bottom-right) ---
+                if (show.genre.isNotEmpty)
+                  Positioned(
+                    bottom: -1,
+                    right: -1,
+                    child: Transform.rotate(
+                      angle: 0.06,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.accentByIndex(
+                              show.showId.hashCode + 1),
+                          border: Border.all(
+                            color: AppColors.accentByIndex(
+                                show.showId.hashCode + 1),
+                            width: 0.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors
+                                  .accentByIndex(
+                                      show.showId.hashCode + 1)
+                                  .withValues(alpha: 0.4),
+                              blurRadius: 3,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          show.genre,
+                          style: TextStyle(
+                            color: _textOnAccent(
+                                show.showId.hashCode + 1),
+                            fontSize: 7,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                // Artist name bottom-left
+                Positioned(
+                  left: 5,
+                  right: 5,
+                  bottom: 4,
+                  child: Text(
+                    show.artist,
+                    style: TextStyle(
+                      color: AppColors.textOnPrimary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                // RSVP badge top-right
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    color: accent,
+                    child: Text(
+                      '${show.interestedCount}',
+                      style: TextStyle(
+                        color: AppColors.textOnPrimary,
+                        fontSize: 8,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          // Colorful sticker row
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Date sticker
+              if (dateStr.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(right: 3),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: accent,
+                      border: Border.all(color: accent, width: 1),
+                    ),
+                    child: Text(
+                      dateStr,
+                      style: TextStyle(
+                        color: AppColors.textOnPrimary,
+                        fontSize: 7,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              // Genre sticker (different accent color)
+              if (genreStr.isNotEmpty)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentByIndex(show.showId.hashCode + 1),
+                    border: Border.all(
+                      color: AppColors.accentByIndex(show.showId.hashCode + 1),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    genreStr,
+                    style: TextStyle(
+                      color: _textOnAccent(show.showId.hashCode + 1),
+                      fontSize: 7,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
             ],
           ),
-        ),
-        const SizedBox(height: 2),
-        if (show.genre.isNotEmpty)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              border: Border.all(color: AppColors.divider, width: 1),
-            ),
-            child: Text(
-              show.genre,
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 8,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-      ],
+        ],
+      ),
     );
-  }
-
-  String _formatDate(DateTime dt) {
-    const months = [
-      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    return '${dt.day} ${months[dt.month]}';
-  }
-
-  String _formatTime(DateTime dt) {
-    final h = dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour);
-    final ampm = dt.hour >= 12 ? 'PM' : 'AM';
-    return '$h:${dt.minute.toString().padLeft(2, '0')}$ampm';
   }
 }
 
-// ---------------------------------------------------------------------------
-// Photo placeholder painter — B&W diagonal pattern with initial
-// ---------------------------------------------------------------------------
-class _PhotoPlaceholderPainter extends CustomPainter {
-  final String letter;
-  _PhotoPlaceholderPainter({required this.letter});
+// Helpers
+Color _textOnAccent(int i) {
+  if (i % 3 == 1) return AppColors.primary;
+  return AppColors.textOnPrimary;
+}
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    final bgPaint = Paint()..color = AppColors.surfaceAlt;
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
-
-    final stripePaint = Paint()
-      ..color = AppColors.primary.withValues(alpha: 0.06)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-    for (double i = -size.height; i < size.width + size.height; i += 8) {
-      canvas.drawLine(
-        Offset(i, 0),
-        Offset(i - size.height, size.height),
-        stripePaint,
-      );
-    }
-
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: letter,
-        style: TextStyle(
-          color: AppColors.primary.withValues(alpha: 0.15),
-          fontSize: size.height * 0.5,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout();
-    textPainter.paint(
-      canvas,
-      Offset(
-        (size.width - textPainter.width) / 2,
-        (size.height - textPainter.height) / 2,
-      ),
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+String _formatDate(DateTime dt) {
+  const months = [
+    '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+  return '${dt.day} ${months[dt.month]}';
 }
 
 // ---------------------------------------------------------------------------
@@ -656,8 +774,8 @@ class _SearchBarState extends State<_SearchBar> {
     return Container(
       height: 44,
       decoration: BoxDecoration(
-        color: AppColors.background,
-        border: Border.all(color: AppColors.divider, width: 1.5),
+        color: AppColors.pink.withValues(alpha: 0.15),
+        border: Border.all(color: AppColors.purple, width: 1.5),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.1),
@@ -684,7 +802,7 @@ class _SearchBarState extends State<_SearchBar> {
             fontSize: 14,
             fontWeight: FontWeight.w400,
           ),
-          prefixIcon: Icon(Icons.search, color: AppColors.textSecondary, size: 20),
+          prefixIcon: Icon(Icons.search, color: AppColors.primary, size: 20),
           suffixIcon: _controller.text.isNotEmpty
               ? GestureDetector(
                   onTap: () {
@@ -692,7 +810,7 @@ class _SearchBarState extends State<_SearchBar> {
                     widget.onChanged('');
                     setState(() {});
                   },
-                  child: Icon(Icons.close, color: AppColors.textSecondary, size: 18),
+                  child: Icon(Icons.close, color: AppColors.primary, size: 18),
                 )
               : null,
           border: InputBorder.none,
@@ -734,14 +852,14 @@ class _FilterChips extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: isActive ? AppColors.primary : AppColors.background,
-                border: Border.all(color: AppColors.divider, width: 1),
+                color: isActive ? AppColors.lime : AppColors.primary.withValues(alpha: 0.08),
+                border: Border.all(color: isActive ? AppColors.lime : AppColors.primary, width: 1),
               ),
               child: Center(
                 child: Text(
                   genre,
                   style: TextStyle(
-                    color: isActive ? AppColors.textOnPrimary : AppColors.textPrimary,
+                    color: isActive ? AppColors.primary : AppColors.primary,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
@@ -762,28 +880,31 @@ class _MapButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
   final bool isLoading;
+  final int colorIndex;
 
   const _MapButton({
     required this.icon,
     required this.onTap,
     this.isLoading = false,
+    this.colorIndex = 0,
   });
 
   @override
   Widget build(BuildContext context) {
+    final borderColor = AppColors.accentByIndex(colorIndex);
     return GestureDetector(
       onTap: isLoading ? null : onTap,
       child: Container(
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: AppColors.background,
-          border: Border.all(color: AppColors.divider, width: 1.5),
+          color: borderColor,
+          border: Border.all(color: borderColor, width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.08),
-              blurRadius: 3,
-              offset: const Offset(0, 1),
+              color: borderColor.withValues(alpha: 0.4),
+              blurRadius: 5,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -794,7 +915,7 @@ class _MapButton extends StatelessWidget {
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: AppColors.primary,
+                    color: AppColors.textOnPrimary,
                   ),
                 )
               : Icon(icon, size: 20, color: AppColors.primary),
